@@ -847,24 +847,66 @@
       // Tutorial
       if (showTutorial && isAuthenticated) {
         const tutorialContent = [
-          // Pantalla 1: Bienvenida
+          // Pantalla 1: Bienvenida + Propósito
           {
             emoji: '🎉',
             title: '¡Bienvenido a Siiyú!',
             content: (
-              <div className="text-center">
-                <p className="text-lg text-gray-700 leading-relaxed">
-                  Siiyú te ayuda a <span className="font-semibold text-purple-600">reconectar con personas</span> que viste en la vida real pero no tuviste oportunidad de hablar.
-                </p>
-                <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-                  <p className="text-sm text-gray-600">
-                    💡 Solo te tomará 1 minuto entender cómo funciona
+              <div className="space-y-4">
+                <div className="p-4 bg-pink-50 rounded-lg border-l-4 border-pink-500">
+                  <p className="text-gray-700 text-center font-semibold text-lg mb-2">
+                    ¿Viste a alguien con quien quieres hablar pero no pudiste?
                   </p>
+                </div>
+                
+                <p className="text-lg text-gray-700 leading-relaxed text-center">
+                  Siiyú te ayuda a <span className="font-semibold text-purple-600">conectar con ellas</span> de una forma totalmente <span className="font-semibold text-purple-600">discreta y anónima</span>.
+                </p>
+                
+                <div className="mt-6 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                    <p className="text-gray-700 flex-1">Publica una <span className="font-semibold">alerta</span> describiendo a la persona y dónde/cuándo la viste</p>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                    <p className="text-gray-700 flex-1">Si esa persona estaba ahí, <span className="font-semibold">recibirá tu alerta</span></p>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                    <p className="text-gray-700 flex-1">Si responde "¡Soy yo!" → <span className="font-semibold">Match y chat anónimo 💬</span></p>
+                  </div>
                 </div>
               </div>
             )
           },
-          // Pantalla 2: Cómo funciona
+          // Pantalla 2: Privacidad
+          {
+            emoji: '🔒',
+            title: 'Tu privacidad importa',
+            content: (
+              <div className="space-y-3">
+                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                  <p className="text-gray-700">✅ <span className="font-semibold">Chat anónimo</span> al inicio</p>
+                </div>
+                
+                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                  <p className="text-gray-700">✅ <span className="font-semibold">Tú decides</span> cuándo revelar tu identidad</p>
+                </div>
+                
+                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                  <p className="text-gray-700">✅ GPS solo para matching, <span className="font-semibold">no compartido públicamente</span></p>
+                </div>
+                
+                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                  <p className="text-gray-700">✅ Puedes <span className="font-semibold">borrar tus ubicaciones</span> cuando quieras</p>
+                </div>
+              </div>
+            )
+          },
+          // Pantalla 3: Cómo funciona
           {
             emoji: '📱',
             title: '¿Cómo funciona?',
@@ -952,66 +994,6 @@
                 <div className="mt-4 p-4 bg-gradient-to-r from-blue-500 to-green-500 rounded-lg text-white text-center">
                   <p className="font-semibold">📍 Botón: "Añadir ubicación"</p>
                   <p className="text-sm opacity-90 mt-1">(Azul-verde en la parte superior)</p>
-                </div>
-              </div>
-            )
-          },
-          // Pantalla 5: Alertas
-          {
-            emoji: '🔔',
-            title: 'Crear Alertas',
-            content: (
-              <div className="space-y-4">
-                <div className="p-4 bg-pink-50 rounded-lg border-l-4 border-pink-500">
-                  <p className="text-gray-700 text-center font-semibold mb-3">
-                    ¿Viste a alguien interesante pero no hablaste?
-                  </p>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
-                    <p className="text-gray-700 flex-1">Click en <span className="font-semibold">"Nueva Alerta"</span> (botón rosa)</p>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                    <p className="text-gray-700 flex-1">Indica <span className="font-semibold">lugar, fecha, hora y descripción</span></p>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
-                    <p className="text-gray-700 flex-1">Todos los que estuvieron ahí <span className="font-semibold">recibirán tu alerta</span></p>
-                  </div>
-                  
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-pink-500 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
-                    <p className="text-gray-700 flex-1">Si alguien responde "¡Soy yo!" → <span className="font-semibold">Match 💬</span></p>
-                  </div>
-                </div>
-              </div>
-            )
-          },
-          // Pantalla 6: Privacidad
-          {
-            emoji: '🔒',
-            title: 'Tu privacidad importa',
-            content: (
-              <div className="space-y-3">
-                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                  <p className="text-gray-700">✅ <span className="font-semibold">Chat anónimo</span> al inicio</p>
-                </div>
-                
-                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                  <p className="text-gray-700">✅ <span className="font-semibold">Tú decides</span> cuándo revelar tu identidad</p>
-                </div>
-                
-                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                  <p className="text-gray-700">✅ GPS solo para matching, <span className="font-semibold">no compartido públicamente</span></p>
-                </div>
-                
-                <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                  <p className="text-gray-700">✅ Puedes <span className="font-semibold">borrar tus ubicaciones</span> cuando quieras</p>
                 </div>
                 
                 <div className="mt-6 p-4 bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg text-white text-center">
