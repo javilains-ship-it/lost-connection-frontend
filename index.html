@@ -52,6 +52,13 @@
       0%, 100% { opacity: 1; }
       50% { opacity: .5; }
     }
+    /* Estilos para badges de tipo */
+    .badge-alerta {
+      background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+    }
+    .badge-ubicacion {
+      background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+    }
   </style>
 </head>
 <body class="bg-gray-100">
@@ -263,7 +270,6 @@
           console.log(`✅ ${locationsToSave.length} ubicaciones guardadas en el servidor`);
         } catch (error) {
           console.error('Error guardando ubicaciones:', error);
-          // Si falla, volver a poner en cola
           locationQueueRef.current = [...locationQueueRef.current, ...locationsToSave];
         }
       };
@@ -288,7 +294,6 @@
           GEO_CONFIG
         );
 
-        // Flush periódico
         const flushInterval = setInterval(flushLocationQueue, GEO_CONFIG.trackingInterval);
 
         setTracking(true);
@@ -298,7 +303,7 @@
             navigator.geolocation.clearWatch(watchIdRef.current);
           }
           clearInterval(flushInterval);
-          flushLocationQueue(); // Último flush
+          flushLocationQueue();
         };
       };
 
@@ -317,7 +322,7 @@
           const result = await navigator.permissions.query({ name: 'geolocation' });
           return result.state === 'granted' || result.state === 'prompt';
         } catch {
-          return true; // Algunos navegadores no soportan permissions API
+          return true;
         }
       };
 
@@ -339,6 +344,12 @@
       <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+
+    const Bell = ({ className }) => (
+      <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
       </svg>
     );
 
@@ -540,31 +551,29 @@
       };
 
       // Login
- const handleLogin = async () => {
-  if (!tempNickname.trim()) return;
-  
-  setLoading(true);
-  try {
-    const { data } = await api.login(tempNickname.trim(), tempPassword || null);
-    api.setToken(data.token);
-    setUser(data.user);
-    setIsAuthenticated(true);
-    
-    // Guardar si tiene contraseña
-    if (window.SecurityManager && tempPassword) {
-      window.SecurityManager.password.setHasPassword(true);
-    }
-    
-    await loadData();
-    
-    showNotification(data.isNewUser ? '¡Bienvenido!' : 'Sesión iniciada');
-    setTempPassword('');
-  } catch (error) {
-    showNotification(error.message, 'error');
-  }
-  setLoading(false);
-};
-         
+      const handleLogin = async () => {
+        if (!tempNickname.trim()) return;
+        
+        setLoading(true);
+        try {
+          const { data } = await api.login(tempNickname.trim(), tempPassword || null);
+          api.setToken(data.token);
+          setUser(data.user);
+          setIsAuthenticated(true);
+          
+          if (window.SecurityManager && tempPassword) {
+            window.SecurityManager.password.setHasPassword(true);
+          }
+          
+          await loadData();
+          
+          showNotification(data.isNewUser ? '¡Bienvenido!' : 'Sesión iniciada');
+          setTempPassword('');
+        } catch (error) {
+          showNotification(error.message, 'error');
+        }
+        setLoading(false);
+      };
 
       // Logout
       const handleLogout = () => {
@@ -614,10 +623,8 @@
         if (!newAlert.place || !newAlert.date || !newAlert.time || !newAlert.description) return;
         
         try {
-          // Preparar datos de la alerta
           const alertData = { ...newAlert };
           
-          // Añadir coordenadas GPS si están disponibles
           if (geo.position && geo.position.lat && geo.position.lng) {
             alertData.latitude = geo.position.lat;
             alertData.longitude = geo.position.lng;
@@ -631,7 +638,6 @@
           setNewAlert({ place: '', date: '', time: '', description: '' });
           setView('feed');
           
-          // Mensaje mejorado indicando si se usó GPS
           const gpsMessage = data.usedGPS ? ' (con GPS)' : '';
           showNotification(`¡Alerta publicada${gpsMessage}! ${data.notifiedUsers} usuarios notificados`);
         } catch (error) {
@@ -778,20 +784,20 @@
                   onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
                   disabled={loading}
                 />
-<div className="relative">
-  <input
-    type="password"
-    placeholder="Contraseña (opcional)"
-    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-    value={tempPassword}
-    onChange={(e) => setTempPassword(e.target.value)}
-    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-    disabled={loading}
-  />
-  <p className="mt-1 text-xs text-gray-500">
-    💡 Puedes dejarla vacía ahora y añadirla después
-  </p>
-</div>
+                <div className="relative">
+                  <input
+                    type="password"
+                    placeholder="Contraseña (opcional)"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                    value={tempPassword}
+                    onChange={(e) => setTempPassword(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                    disabled={loading}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    💡 Puedes dejarla vacía ahora y añadirla después
+                  </p>
+                </div>
                 <button
                   onClick={handleLogin}
                   disabled={!tempNickname.trim() || loading}
@@ -817,25 +823,32 @@
         return (
           <div className="min-h-screen bg-gray-50 p-4">
             <div className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-xl shadow-lg p-6 fade-in">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Crear Nueva Alerta</h2>
+              <div className="bg-white rounded-xl shadow-lg p-6 fade-in border-l-4 border-pink-500">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg">
+                    <Bell className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">Crear Nueva Alerta</h2>
+                    <p className="text-sm text-gray-500">Busca a alguien que viste en un lugar específico</p>
+                  </div>
+                </div>
                 
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Lugar del encuentro
+                      📍 Lugar del encuentro
                     </label>
                     <div className="relative">
                       <input
                         type="text"
                         placeholder="ej: Café Central, Plaza Mayor..."
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
                         value={newAlert.place}
                         onChange={(e) => {
                           const value = e.target.value;
                           setNewAlert({...newAlert, place: value});
                           
-                          // Autocompletado mientras escribe
                           if (value.length >= 2 && window.PlacesSearch) {
                             const suggestions = window.PlacesSearch.search(value, { limit: 5 });
                             setAlertPlaceSuggestions(suggestions);
@@ -844,25 +857,22 @@
                           }
                         }}
                         onFocus={() => {
-                          // Mostrar sugerencias contextuales al hacer foco
                           if (window.PlacesSearch && (!newAlert.place || newAlert.place.length < 2)) {
-                         const contextSuggestions = window.PlacesSearch.contextual(5);
+                            const contextSuggestions = window.PlacesSearch.contextual(5);
                             setAlertPlaceSuggestions(contextSuggestions.slice(0, 8));
                           }
                         }}
                         onBlur={() => {
-                          // Cerrar sugerencias con delay para permitir clics
                           setTimeout(() => setAlertPlaceSuggestions([]), 200);
                         }}
                       />
                       
-                      {/* LISTA DE SUGERENCIAS */}
                       {alertPlaceSuggestions.length > 0 && (
                         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                           {alertPlaceSuggestions.map((suggestion, idx) => (
                             <div
                               key={suggestion.id || idx}
-                              className="px-4 py-2 hover:bg-purple-50 cursor-pointer transition"
+                              className="px-4 py-2 hover:bg-pink-50 cursor-pointer transition"
                               onClick={() => {
                                 setNewAlert({
                                   ...newAlert, 
@@ -884,13 +894,8 @@
                                   </div>
                                 </div>
                                 {suggestion.score && (
-                                  <div className="ml-2 text-xs text-purple-600 font-medium">
+                                  <div className="ml-2 text-xs text-pink-600 font-medium">
                                     {Math.round(suggestion.score * 100)}%
-                                  </div>
-                                )}
-                                {suggestion.distance && (
-                                  <div className="ml-2 text-xs text-blue-600">
-                                    {suggestion.distance}m
                                   </div>
                                 )}
                               </div>
@@ -899,15 +904,9 @@
                         </div>
                       )}
                       
-                      {/* AYUDA CONTEXTUAL */}
                       {newAlert.place.length === 0 && (
                         <p className="mt-1 text-xs text-gray-500">
-                          💡 Haz clic para ver lugares populares según la hora
-                        </p>
-                      )}
-                      {newAlert.place.length === 1 && (
-                        <p className="mt-1 text-xs text-gray-500">
-                          ⌨️ Escribe al menos 2 caracteres para buscar
+                          💡 Haz clic para ver lugares populares
                         </p>
                       )}
                     </div>
@@ -915,20 +914,20 @@
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">📅 Fecha</label>
                       <input
                         type="date"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
                         value={newAlert.date}
                         onChange={(e) => setNewAlert({...newAlert, date: e.target.value})}
                         max={new Date().toISOString().split('T')[0]}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Hora</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">⏰ Hora</label>
                       <input
                         type="time"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500"
                         value={newAlert.time}
                         onChange={(e) => setNewAlert({...newAlert, time: e.target.value})}
                       />
@@ -937,11 +936,11 @@
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Descripción de la persona
+                      👤 Descripción de la persona
                     </label>
                     <textarea
                       placeholder="Describe a la persona que quieres encontrar..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 h-32 resize-none"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 h-32 resize-none"
                       value={newAlert.description}
                       onChange={(e) => setNewAlert({...newAlert, description: e.target.value})}
                     />
@@ -957,9 +956,9 @@
                     <button
                       onClick={createAlert}
                       disabled={!newAlert.place || !newAlert.date || !newAlert.time || !newAlert.description}
-                      className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50"
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:from-pink-600 hover:to-purple-700 transition font-semibold disabled:opacity-50"
                     >
-                      Publicar
+                      Publicar Alerta
                     </button>
                   </div>
                 </div>
@@ -1089,9 +1088,10 @@
                   </button>
                   <button
                     onClick={() => setView('createAlert')}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold"
+                    className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:from-pink-600 hover:to-purple-700 transition font-semibold flex items-center gap-2"
                   >
-                    + Nueva Alerta
+                    <Bell className="w-5 h-5" />
+                    Nueva Alerta
                   </button>
                 </div>
               </div>
@@ -1121,9 +1121,9 @@
                 <span className="text-gray-600">{matches.length} matches</span>
                 <button
                   onClick={() => setShowAddLocation(true)}
-                  className="ml-auto flex items-center gap-1 text-purple-600 hover:text-purple-700 font-medium"
+                  className="ml-auto flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-lg text-sm hover:from-blue-600 hover:to-green-600 transition font-medium"
                 >
-                  <Plus className="w-4 h-4" />
+                  <MapPin className="w-4 h-4" />
                   Añadir ubicación
                 </button>
               </div>
@@ -1141,9 +1141,17 @@
           {/* Modal: Añadir ubicación */}
           {showAddLocation && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full fade-in">
+              <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full fade-in border-l-4 border-blue-500">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold text-gray-800">Añadir ubicación</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gradient-to-br from-blue-500 to-green-500 rounded-lg">
+                      <MapPin className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-800">Añadir ubicación</h3>
+                      <p className="text-xs text-gray-500">Registra dónde estuviste</p>
+                    </div>
+                  </div>
                   <button onClick={() => {
                     setShowAddLocation(false);
                     setPlaceSuggestions([]);
@@ -1153,18 +1161,16 @@
                 </div>
                 
                 <div className="space-y-4">
-                  {/* INPUT DE LUGAR CON AUTOCOMPLETADO */}
                   <div className="relative">
                     <input
                       type="text"
                       placeholder="Lugar (ej: Café Central, Starbucks...)"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       value={manualLocation.place}
                       onChange={(e) => {
                         const value = e.target.value;
                         setManualLocation({...manualLocation, place: value});
                         
-                        // Autocompletado mientras escribe
                         if (value.length >= 2 && window.PlacesSearch) {
                           const suggestions = window.PlacesSearch.search(value, { limit: 5 });
                           setPlaceSuggestions(suggestions);
@@ -1173,25 +1179,22 @@
                         }
                       }}
                       onFocus={() => {
-                        // Mostrar sugerencias contextuales al hacer foco
                         if (window.PlacesSearch && (!manualLocation.place || manualLocation.place.length < 2)) {
-                   const contextSuggestions = window.PlacesSearch.contextual(8); 
+                          const contextSuggestions = window.PlacesSearch.contextual(8); 
                           setPlaceSuggestions(contextSuggestions.slice(0, 8));
                         }
                       }}
                       onBlur={() => {
-                        // Cerrar sugerencias con delay para permitir clics
                         setTimeout(() => setPlaceSuggestions([]), 200);
                       }}
                     />
                     
-                    {/* LISTA DE SUGERENCIAS */}
                     {placeSuggestions.length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {placeSuggestions.map((suggestion, idx) => (
                           <div
                             key={suggestion.id || idx}
-                            className="px-4 py-2 hover:bg-purple-50 cursor-pointer transition"
+                            className="px-4 py-2 hover:bg-blue-50 cursor-pointer transition"
                             onClick={() => {
                               setManualLocation({
                                 ...manualLocation, 
@@ -1213,13 +1216,8 @@
                                 </div>
                               </div>
                               {suggestion.score && (
-                                <div className="ml-2 text-xs text-purple-600 font-medium">
+                                <div className="ml-2 text-xs text-blue-600 font-medium">
                                   {Math.round(suggestion.score * 100)}%
-                                </div>
-                              )}
-                              {suggestion.distance && (
-                                <div className="ml-2 text-xs text-blue-600">
-                                  {suggestion.distance}m
                                 </div>
                               )}
                             </div>
@@ -1228,62 +1226,53 @@
                       </div>
                     )}
                     
-                    {/* AYUDA CONTEXTUAL */}
                     {manualLocation.place.length === 0 && (
                       <p className="mt-1 text-xs text-gray-500">
-                        💡 Haz clic para ver lugares populares según la hora
-                      </p>
-                    )}
-                    {manualLocation.place.length === 1 && (
-                      <p className="mt-1 text-xs text-gray-500">
-                        ⌨️ Escribe al menos 2 caracteres para buscar
+                        💡 Haz clic para ver lugares populares
                       </p>
                     )}
                   </div>
 
-                  {/* INPUT DE FECHA */}
                   <input
                     type="date"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     value={manualLocation.date}
                     onChange={(e) => setManualLocation({...manualLocation, date: e.target.value})}
                     max={new Date().toISOString().split('T')[0]}
                   />
 
-                  {/* INPUT DE HORA */}
                   <input
                     type="time"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     value={manualLocation.time}
                     onChange={(e) => setManualLocation({...manualLocation, time: e.target.value})}
                   />
 
-                  {/* BOTÓN GUARDAR */}
                   <button
                     onClick={addManualLocation}
                     disabled={!manualLocation.place || !manualLocation.date || !manualLocation.time}
-                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-lg hover:from-blue-600 hover:to-green-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Guardar
+                    Guardar Ubicación
                   </button>
                 </div>
 
-                {/* UBICACIONES RECIENTES */}
                 {locations.length > 0 && (
                   <div className="mt-6 pt-4 border-t">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-blue-600" />
                       Ubicaciones recientes:
                     </h4>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {locations.slice(0, 5).map(loc => (
-                        <div key={loc.id} className="flex items-center justify-between text-sm bg-gray-50 px-3 py-2 rounded">
+                        <div key={loc.id} className="flex items-center justify-between text-sm bg-gradient-to-r from-blue-50 to-green-50 px-3 py-2 rounded border-l-2 border-blue-400">
                           <div className="flex-1">
                             <span className="font-medium">{loc.place_name}</span>
                             <span className="text-gray-500 ml-2 text-xs">
                               {new Date(loc.timestamp).toLocaleDateString()}
                             </span>
                             {loc.is_automatic && (
-                              <span className="ml-2 text-xs bg-green-100 text-green-700 px-1 rounded">
+                              <span className="ml-2 text-xs badge-ubicacion text-white px-2 py-0.5 rounded font-medium">
                                 GPS
                               </span>
                             )}
@@ -1311,7 +1300,8 @@
             {/* Matches */}
             {matches.length > 0 && (
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-purple-600" />
                   Tus Matches ({matches.length})
                 </h2>
                 <div className="grid gap-3">
@@ -1345,17 +1335,18 @@
 
             {/* Alertas */}
             <div className="mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <Bell className="w-5 h-5 text-pink-600" />
                 Alertas para ti ({alerts.length})
               </h2>
-              <p className="text-xs text-gray-500">
-                Alertas de lugares donde estuviste
+              <p className="text-xs text-gray-500 ml-7">
+                📣 Personas buscando a alguien en lugares donde estuviste
               </p>
             </div>
             
             {alerts.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-8 text-center">
-                <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <Bell className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-600 mb-2">No hay alertas para ti</p>
                 <p className="text-sm text-gray-500 mb-4">
                   {locations.length === 0 
@@ -1368,7 +1359,7 @@
                 {!geo.tracking && locations.length === 0 && (
                   <button
                     onClick={() => setShowAddLocation(true)}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
+                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-lg hover:from-blue-600 hover:to-green-600 transition"
                   >
                     Añadir ubicación
                   </button>
@@ -1377,11 +1368,16 @@
             ) : (
               <div className="space-y-4">
                 {alerts.map(alert => (
-                  <div key={alert.id} className="bg-white rounded-lg shadow p-5 fade-in">
+                  <div key={alert.id} className="bg-white rounded-lg shadow p-5 fade-in border-l-4 border-pink-500 hover:shadow-md transition">
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2 text-purple-600">
-                        <MapPin className="w-5 h-5" />
-                        <span className="font-semibold">{alert.place_name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="badge-alerta text-white px-2.5 py-1 rounded-full text-xs font-semibold">
+                          ALERTA
+                        </span>
+                        <div className="flex items-center gap-2 text-pink-600">
+                          <MapPin className="w-5 h-5" />
+                          <span className="font-semibold">{alert.place_name}</span>
+                        </div>
                       </div>
                       {alert.is_own_alert && (
                         <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-medium">
@@ -1407,7 +1403,7 @@
                       {!alert.is_own_alert && !alert.has_responded && (
                         <button
                           onClick={() => respondToAlert(alert.id)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-sm font-semibold"
+                          className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:from-pink-600 hover:to-purple-700 transition text-sm font-semibold"
                         >
                           ¡Soy yo! Responder
                         </button>
