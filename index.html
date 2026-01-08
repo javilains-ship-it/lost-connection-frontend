@@ -1735,15 +1735,6 @@
                 className="space-y-4"
                 onClick={() => setUnreadAlertsCount(0)}
               >
-                    onClick={() => setShowAddLocation(true)}
-                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-lg hover:from-blue-600 hover:to-green-600 transition"
-                  >
-                    Añadir ubicación
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-4">
                 {alerts.map(alert => (
                   <div key={alert.id} className="bg-white rounded-lg shadow p-5 fade-in border-l-4 border-pink-500 hover:shadow-md transition">
                     <div className="flex items-start justify-between mb-3">
