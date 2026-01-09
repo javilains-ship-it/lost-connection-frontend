@@ -1389,7 +1389,7 @@
 
                         try {
                           const now = new Date();
-                          const response = await api.post('/api/alerts', {
+                          const response = await api.createAlert({
                             place: newAlert.place || 'Ubicación GPS',
                             latitude: geo.currentPosition.lat,
                             longitude: geo.currentPosition.lng,
@@ -1405,7 +1405,7 @@
                             });
                             setNewAlert({ place: '', date: '', time: '', description: '' });
                             setView('feed');
-                            await loadAlerts();
+                            await loadData();
                           }
                         } catch (error) {
                           setNotification({ 
