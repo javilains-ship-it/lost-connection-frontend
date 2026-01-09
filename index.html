@@ -92,7 +92,7 @@
     // Configuración de geolocalización
     const GEO_CONFIG = {
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 30000, // 30 segundos (aumentado desde 10)
       maximumAge: 300000, // 5 minutos
       distanceFilter: 50, // Guardar solo si se movió más de 50 metros
       trackingInterval: 300000 // Guardar ubicación cada 5 minutos
@@ -304,7 +304,25 @@
           },
           (err) => {
             console.error('Error GPS:', err);
-            setError(err.message);
+            
+            // Si falla con alta precisión, intentar con baja precisión
+            if (err.code === 3 && GEO_CONFIG.enableHighAccuracy) { // TIMEOUT
+              console.log('⚠️ Timeout con alta precisión, intentando baja precisión...');
+              
+              navigator.geolocation.watchPosition(
+                (pos) => {
+                  saveLocationToQueue(pos.coords);
+                  setError(null);
+                },
+                (err2) => {
+                  console.error('Error GPS (baja precisión):', err2);
+                  setError(err2.message);
+                },
+                { ...GEO_CONFIG, enableHighAccuracy: false }
+              );
+            } else {
+              setError(err.message);
+            }
           },
           GEO_CONFIG
         );
