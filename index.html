@@ -1517,7 +1517,16 @@
                     <LogOut className="w-5 h-5" />
                   </button>
                   <button
-                    onClick={() => setView('createAlert')}
+                    onClick={() => {
+                      // Actualizar fecha y hora al día actual
+                      const now = new Date();
+                      setNewAlert({
+                        ...newAlert,
+                        date: now.toISOString().split('T')[0],
+                        time: now.toTimeString().slice(0, 5)
+                      });
+                      setView('createAlert');
+                    }}
                     className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:from-pink-600 hover:to-purple-700 transition font-semibold flex items-center gap-2"
                   >
                     <Bell className="w-5 h-5" />
