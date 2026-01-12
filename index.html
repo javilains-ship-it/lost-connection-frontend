@@ -473,6 +473,7 @@
       const [newMessage, setNewMessage] = useState('');
       const [showAddLocation, setShowAddLocation] = useState(false);
       const [isTyping, setIsTyping] = useState(false);
+      const [sendingAlert, setSendingAlert] = useState(false);
       const [otherUserTyping, setOtherUserTyping] = useState(false);
       
       const [newAlert, setNewAlert] = useState({
@@ -1398,6 +1399,13 @@
                     </button>
                     <button
                       onClick={async () => {
+                        console.log('🔘 Click en Publicar Alerta Aquí');
+                        console.log('GPS:', geo.currentPosition);
+                        console.log('Descripción:', newAlert.description);
+                        console.log('sendingAlert:', sendingAlert);
+                        
+                        if (sendingAlert) return; // Evitar clicks múltiples
+                        
                         if (!geo.currentPosition) {
                           setNotification({ type: 'error', message: 'Esperando ubicación GPS...' });
                           return;
@@ -1408,6 +1416,7 @@
                           return;
                         }
 
+                        setSendingAlert(true);
                         try {
                           const now = new Date();
                           const response = await api.createAlert({
@@ -1425,21 +1434,32 @@
                               message: `Alerta creada. ${response.data.data.notifiedUsers} usuarios notificados` 
                             });
                             setNewAlert({ place: '', date: '', time: '', description: '' });
+                            
+                            // Volver al feed INMEDIATAMENTE
                             setView('feed');
-                            await loadData();
+                            
+                            // Recargar alertas en segundo plano
+                            try {
+                              const alertsRes = await api.getAlerts();
+                              setAlerts(alertsRes.data.alerts);
+                            } catch (err) {
+                              console.error('Error recargando alertas:', err);
+                            }
                           }
                         } catch (error) {
                           setNotification({ 
                             type: 'error', 
                             message: error.response?.data?.message || 'Error al crear alerta' 
                           });
+                        } finally {
+                          setSendingAlert(false);
                         }
                       }}
-                      disabled={!geo.currentPosition || !newAlert.description}
+                      disabled={!geo.currentPosition || !newAlert.description || sendingAlert}
                       className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       <MapPin className="w-5 h-5" />
-                      Publicar Alerta Aquí
+                      {sendingAlert ? 'Enviando...' : 'Publicar Alerta Aquí'}
                     </button>
                   </div>
                 </div>
