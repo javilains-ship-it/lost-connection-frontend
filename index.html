@@ -1331,6 +1331,153 @@
         );
       }
 
+      // Vista: Crear Alerta con GPS actual
+      if (view === 'createAlertGPS') {
+        return (
+          <div className="min-h-screen bg-gray-50">
+            <div className="max-w-2xl mx-auto p-4">
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <button 
+                    onClick={() => setView('feed')}
+                    className="text-gray-600 hover:text-gray-800 font-medium"
+                  >
+                    ← Volver
+                  </button>
+                  <div className="text-center flex-1">
+                    <h2 className="text-2xl font-bold text-gray-800">Alerta en tu Ubicación</h2>
+                    <p className="text-sm text-gray-500">Se usará tu ubicación GPS actual</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  {/* Mostrar ubicación actual */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2 text-green-700 mb-2">
+                      <MapPin className="w-5 h-5" />
+                      <span className="font-semibold">Tu ubicación actual</span>
+                    </div>
+                    {geo.currentPosition ? (
+                      <div className="text-sm text-gray-600">
+                        <p>📍 Lat: {geo.currentPosition.lat.toFixed(6)}</p>
+                        <p>📍 Lng: {geo.currentPosition.lng.toFixed(6)}</p>
+                        <p className="mt-2 text-xs text-gray-500">
+                          📅 Fecha: {new Date().toLocaleDateString('es-ES')}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          ⏰ Hora: {new Date().toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'})}
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Esperando GPS...</p>
+                    )}
+                  </div>
+
+                  {/* Nombre del lugar (opcional) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      📍 Nombre del lugar (opcional)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="ej: Café Central, Parque..."
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      value={newAlert.place}
+                      onChange={(e) => setNewAlert({...newAlert, place: e.target.value})}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Si no lo especificas, se guardará como "Ubicación GPS"
+                    </p>
+                  </div>
+                  
+                  {/* Descripción */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      👤 Descripción de la persona
+                    </label>
+                    <textarea
+                      placeholder="Describe a la persona que quieres encontrar..."
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 h-32 resize-none"
+                      value={newAlert.description}
+                      onChange={(e) => setNewAlert({...newAlert, description: e.target.value})}
+                    />
+                  </div>
+                  
+                  {/* Botones */}
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={() => setView('feed')}
+                      className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={async () => {
+                        console.log('🔘 Click en Publicar Alerta Aquí');
+                        console.log('GPS:', geo.currentPosition);
+                        console.log('Descripción:', newAlert.description);
+                        console.log('sendingAlert:', sendingAlert);
+                        
+                        if (sendingAlert) return; // Evitar clicks múltiples
+                        
+                        if (!geo.currentPosition) {
+                          setNotification({ type: 'error', message: 'Esperando ubicación GPS...' });
+                          return;
+                        }
+                        
+                        if (!newAlert.description || newAlert.description.length < 10) {
+                          setNotification({ type: 'error', message: 'La descripción debe tener al menos 10 caracteres' });
+                          return;
+                        }
+
+                        setSendingAlert(true);
+                        try {
+                          const now = new Date();
+                          const response = await api.createAlert({
+                            place: newAlert.place || 'Ubicación GPS',
+                            latitude: geo.currentPosition.lat,
+                            longitude: geo.currentPosition.lng,
+                            date: now.toISOString().split('T')[0],
+                            time: now.toTimeString().slice(0, 5),
+                            description: newAlert.description
+                          });
+
+                          if (response.data.success) {
+                            setNotification({ 
+                              type: 'success', 
+                              message: `Alerta creada. ${response.data.data.notifiedUsers} usuarios notificados` 
+                            });
+                            setNewAlert({ place: '', date: '', time: '', description: '' });
+                            
+                            // Volver al feed INMEDIATAMENTE
+                            setView('feed');
+                            
+                            // Recargar todos los datos en segundo plano
+                            loadData().catch(err => console.error('Error recargando datos:', err));
+                          }
+                        } catch (error) {
+                          setNotification({ 
+                            type: 'error', 
+                            message: error.response?.data?.message || 'Error al crear alerta' 
+                          });
+                        } finally {
+                          setSendingAlert(false);
+                        }
+                      }}
+                      disabled={!geo.currentPosition || !newAlert.description || sendingAlert}
+                      className="flex-1 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:from-green-600 hover:to-emerald-700 transition font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <MapPin className="w-5 h-5" />
+                      {sendingAlert ? 'Enviando...' : 'Publicar Alerta Aquí'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       // Chat
       if (view === 'chat' && activeChat) {
         return (
