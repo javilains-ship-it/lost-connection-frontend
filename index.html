@@ -616,6 +616,23 @@
         return () => document.removeEventListener('click', handleClickOutside);
       }, [showAlertMenu]);
 
+      // Auto-recargar alertas cada 30 segundos (polling)
+      useEffect(() => {
+        if (!isAuthenticated) return;
+        
+        const interval = setInterval(async () => {
+          try {
+            const alertsRes = await api.getAlerts();
+            setAlerts(alertsRes.data.alerts);
+            console.log('🔄 Alertas actualizadas automáticamente');
+          } catch (error) {
+            console.error('Error auto-recargando alertas:', error);
+          }
+        }, 30000); // 30 segundos
+        
+        return () => clearInterval(interval);
+      }, [isAuthenticated]);
+
       // Cargar datos
       const loadData = async () => {
         try {
@@ -724,7 +741,11 @@
           }
           
           const { data } = await api.createAlert(alertData);
-          setAlerts([data.alert, ...alerts]);
+          
+          // Recargar todas las alertas desde el servidor
+          const alertsRes = await api.getAlerts();
+          setAlerts(alertsRes.data.alerts);
+          
           setNewAlert({ place: '', date: '', time: '', description: '' });
           setView('feed');
           
