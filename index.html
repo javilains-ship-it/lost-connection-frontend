@@ -297,35 +297,48 @@
 
         console.log('🚀 Iniciando tracking GPS...');
         
-        watchIdRef.current = navigator.geolocation.watchPosition(
-          (pos) => {
-            saveLocationToQueue(pos.coords);
-            setError(null);
-          },
-          (err) => {
-            console.error('Error GPS:', err);
-            
-            // Si falla con alta precisión, intentar con baja precisión
-            if (err.code === 3 && GEO_CONFIG.enableHighAccuracy) { // TIMEOUT
-              console.log('⚠️ Timeout con alta precisión, intentando baja precisión...');
+        const attemptGPS = () => {
+          watchIdRef.current = navigator.geolocation.watchPosition(
+            (pos) => {
+              saveLocationToQueue(pos.coords);
+              setError(null);
+            },
+            (err) => {
+              console.error('Error GPS:', err);
               
-              navigator.geolocation.watchPosition(
-                (pos) => {
-                  saveLocationToQueue(pos.coords);
-                  setError(null);
-                },
-                (err2) => {
-                  console.error('Error GPS (baja precisión):', err2);
-                  setError(err2.message);
-                },
-                { ...GEO_CONFIG, enableHighAccuracy: false }
-              );
-            } else {
-              setError(err.message);
-            }
-          },
-          GEO_CONFIG
-        );
+              // Si falla con alta precisión, intentar con baja precisión
+              if (err.code === 3 && GEO_CONFIG.enableHighAccuracy) { // TIMEOUT
+                console.log('⚠️ Timeout con alta precisión, intentando baja precisión...');
+                
+                navigator.geolocation.watchPosition(
+                  (pos) => {
+                    saveLocationToQueue(pos.coords);
+                    setError(null);
+                  },
+                  (err2) => {
+                    console.error('Error GPS (baja precisión):', err2);
+                    setError(err2.message + ' - Reintentando en 60s...');
+                  },
+                  { ...GEO_CONFIG, enableHighAccuracy: false }
+                );
+              } else {
+                setError(err.message + ' - Reintentando en 60s...');
+              }
+            },
+            GEO_CONFIG
+          );
+        };
+        
+        // Intentar inicialmente
+        attemptGPS();
+        
+        // Reintentar cada 60 segundos si hay error
+        const retryInterval = setInterval(() => {
+          if (error) {
+            console.log('🔄 Reintentando GPS...');
+            attemptGPS();
+          }
+        }, 60000); // 60 segundos
 
         const flushInterval = setInterval(flushLocationQueue, GEO_CONFIG.trackingInterval);
 
@@ -336,6 +349,7 @@
             navigator.geolocation.clearWatch(watchIdRef.current);
           }
           clearInterval(flushInterval);
+          clearInterval(retryInterval);
           flushLocationQueue();
         };
       };
@@ -1438,13 +1452,8 @@
                             // Volver al feed INMEDIATAMENTE
                             setView('feed');
                             
-                            // Recargar alertas en segundo plano
-                            try {
-                              const alertsRes = await api.getAlerts();
-                              setAlerts(alertsRes.data.alerts);
-                            } catch (err) {
-                              console.error('Error recargando alertas:', err);
-                            }
+                            // Recargar todos los datos en segundo plano
+                            loadData().catch(err => console.error('Error recargando datos:', err));
                           }
                         } catch (error) {
                           setNotification({ 
