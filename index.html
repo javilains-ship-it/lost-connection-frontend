@@ -743,6 +743,9 @@
       // Crear alerta
       const createAlert = async () => {
         if (!newAlert.place || !newAlert.date || !newAlert.time || !newAlert.description) return;
+        if (sendingAlert) return; // Evitar clicks múltiples
+        
+        setSendingAlert(true);
         
         try {
           const alertData = { ...newAlert };
@@ -757,23 +760,25 @@
           
           const { data } = await api.createAlert(alertData);
           
-          // Limpiar formulario y volver al feed INMEDIATAMENTE
-          setNewAlert({ place: '', date: '', time: '', description: '' });
-          setView('feed');
+          console.log('✅ Alerta creada exitosamente');
           
           // Mostrar notificación
           const gpsMessage = data.usedGPS ? ' (con GPS)' : '';
           showNotification(`¡Alerta publicada${gpsMessage}! ${data.notifiedUsers} usuarios notificados`);
           
-          // Recargar alertas en segundo plano
-          try {
-            const alertsRes = await api.getAlerts();
-            setAlerts(alertsRes.data.alerts);
-          } catch (err) {
-            console.error('Error recargando alertas:', err);
-          }
         } catch (error) {
+          console.error('❌ Error creando alerta:', error);
           showNotification(error.message, 'error');
+        } finally {
+          // SIEMPRE limpiar y volver al feed, pase lo que pase
+          setNewAlert({ place: '', date: '', time: '', description: '' });
+          setSendingAlert(false);
+          setView('feed');
+          
+          // Recargar alertas en segundo plano
+          setTimeout(() => {
+            api.getAlerts().then(res => setAlerts(res.data.alerts)).catch(console.error);
+          }, 500);
         }
       };
 
@@ -1324,10 +1329,10 @@
                     </button>
                     <button
                       onClick={createAlert}
-                      disabled={!newAlert.place || !newAlert.date || !newAlert.time || !newAlert.description}
+                      disabled={!newAlert.place || !newAlert.date || !newAlert.time || !newAlert.description || sendingAlert}
                       className="flex-1 px-4 py-3 bg-gradient-to-r from-pink-500 to-purple-600 text-white rounded-lg hover:from-pink-600 hover:to-purple-700 transition font-semibold disabled:opacity-50"
                     >
-                      Publicar Alerta
+                      {sendingAlert ? 'Enviando...' : 'Publicar Alerta'}
                     </button>
                   </div>
                 </div>
