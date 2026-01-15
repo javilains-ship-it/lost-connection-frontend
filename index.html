@@ -757,15 +757,21 @@
           
           const { data } = await api.createAlert(alertData);
           
-          // Recargar todas las alertas desde el servidor
-          const alertsRes = await api.getAlerts();
-          setAlerts(alertsRes.data.alerts);
-          
+          // Limpiar formulario y volver al feed INMEDIATAMENTE
           setNewAlert({ place: '', date: '', time: '', description: '' });
           setView('feed');
           
+          // Mostrar notificación
           const gpsMessage = data.usedGPS ? ' (con GPS)' : '';
           showNotification(`¡Alerta publicada${gpsMessage}! ${data.notifiedUsers} usuarios notificados`);
+          
+          // Recargar alertas en segundo plano
+          try {
+            const alertsRes = await api.getAlerts();
+            setAlerts(alertsRes.data.alerts);
+          } catch (err) {
+            console.error('Error recargando alertas:', err);
+          }
         } catch (error) {
           showNotification(error.message, 'error');
         }
