@@ -1877,11 +1877,33 @@
                           <span className="font-semibold">{alert.place_name}</span>
                         </div>
                       </div>
-                      {alert.is_own_alert && (
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-medium">
-                          Tu alerta
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {alert.is_own_alert && (
+                          <>
+                            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-medium">
+                              Tu alerta
+                            </span>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (window.confirm('¿Eliminar esta alerta?')) {
+                                  try {
+                                    await api.request(`/alerts/${alert.id}`, { method: 'DELETE' });
+                                    setAlerts(alerts.filter(a => a.id !== alert.id));
+                                    showNotification('Alerta eliminada');
+                                  } catch (error) {
+                                    showNotification('Error al eliminar alerta', 'error');
+                                  }
+                                }
+                              }}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition"
+                              title="Eliminar alerta"
+                            >
+                              <Trash className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
