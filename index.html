@@ -478,6 +478,10 @@
       const [matches, setMatches] = useState([]);
       const [locations, setLocations] = useState([]);
       const [activeChat, setActiveChat] = useState(null);
+      const [hiddenAlerts, setHiddenAlerts] = useState(() => {
+        const saved = localStorage.getItem('lc_hidden_alerts');
+        return saved ? JSON.parse(saved) : [];
+      });
       const [chatMessages, setChatMessages] = useState([]);
       const [notification, setNotification] = useState(null);
       
@@ -638,7 +642,11 @@
         const interval = setInterval(async () => {
           try {
             const alertsRes = await api.getAlerts();
-            setAlerts(alertsRes.data.alerts);
+            // Filtrar alertas ocultadas
+            const visibleAlerts = alertsRes.data.alerts.filter(
+              alert => !hiddenAlerts.includes(alert.id)
+            );
+            setAlerts(visibleAlerts);
             console.log('🔄 Alertas actualizadas automáticamente');
           } catch (error) {
             console.error('Error auto-recargando alertas:', error);
@@ -646,7 +654,7 @@
         }, 30000); // 30 segundos
         
         return () => clearInterval(interval);
-      }, [isAuthenticated]);
+      }, [isAuthenticated, hiddenAlerts]);
 
       // Cargar datos
       const loadData = async () => {
@@ -657,7 +665,12 @@
             api.getLocations()
           ]);
           
-          setAlerts(alertsRes.data.alerts);
+          // Filtrar alertas que el usuario ha ocultado
+          const visibleAlerts = alertsRes.data.alerts.filter(
+            alert => !hiddenAlerts.includes(alert.id)
+          );
+          
+          setAlerts(visibleAlerts);
           setMatches(matchesRes.data.matches);
           setLocations(locationsRes.data.locations);
         } catch (error) {
@@ -796,6 +809,15 @@
         } catch (error) {
           showNotification(error.message, 'error');
         }
+      };
+
+      // Ocultar alerta recibida
+      const hideAlert = (alertId) => {
+        const newHidden = [...hiddenAlerts, alertId];
+        setHiddenAlerts(newHidden);
+        localStorage.setItem('lc_hidden_alerts', JSON.stringify(newHidden));
+        setAlerts(alerts.filter(a => a.id !== alertId));
+        showNotification('Alerta ocultada');
       };
 
       // Abrir chat
@@ -1931,8 +1953,7 @@
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              setAlerts(alerts.filter(a => a.id !== alert.id));
-                              showNotification('Alerta ocultada');
+                              hideAlert(alert.id);
                             }}
                             className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition"
                             title="Ocultar alerta"
