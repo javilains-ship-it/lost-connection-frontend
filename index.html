@@ -1798,13 +1798,15 @@
                   {matches.map(match => (
                     <div
                       key={match.id}
-                      className={`bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-4 text-white cursor-pointer hover:shadow-lg transition fade-in ${
+                      className={`bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg p-4 text-white hover:shadow-lg transition fade-in ${
                         match.hasUnread ? 'ring-2 ring-yellow-400' : ''
                       }`}
-                      onClick={() => openChat(match.id)}
                     >
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div 
+                          className="flex-1 cursor-pointer"
+                          onClick={() => openChat(match.id)}
+                        >
                           <p className="font-semibold">
                             {match.hasUnread && '🔔 '}Match con {match.other_user_nickname || 'Anónimo'}
                           </p>
@@ -1815,7 +1817,30 @@
                             </p>
                           )}
                         </div>
-                        <MessageCircle className="w-6 h-6" />
+                        <div className="flex items-center gap-2">
+                          <MessageCircle 
+                            className="w-6 h-6 cursor-pointer"
+                            onClick={() => openChat(match.id)}
+                          />
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (window.confirm('¿Cerrar este match? Se eliminará la conversación.')) {
+                                try {
+                                  await api.request(`/matches/${match.id}`, { method: 'DELETE' });
+                                  setMatches(matches.filter(m => m.id !== match.id));
+                                  showNotification('Match cerrado');
+                                } catch (error) {
+                                  showNotification('Error al cerrar match', 'error');
+                                }
+                              }
+                            }}
+                            className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-lg transition"
+                            title="Cerrar match"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1878,7 +1903,7 @@
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {alert.is_own_alert && (
+                        {alert.is_own_alert ? (
                           <>
                             <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-medium">
                               Tu alerta
@@ -1902,6 +1927,18 @@
                               <Trash className="w-4 h-4" />
                             </button>
                           </>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAlerts(alerts.filter(a => a.id !== alert.id));
+                              showNotification('Alerta ocultada');
+                            }}
+                            className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg transition"
+                            title="Ocultar alerta"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
                         )}
                       </div>
                     </div>
