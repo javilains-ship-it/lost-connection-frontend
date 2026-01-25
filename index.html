@@ -131,6 +131,16 @@
           
           const data = await response.json();
           
+          // Detectar token expirado (401)
+          if (response.status === 401) {
+            console.warn('⚠️ Token expirado, cerrando sesión...');
+            this.setToken(null);
+            localStorage.removeItem('lc_user');
+            localStorage.removeItem('lc_hidden_alerts');
+            window.location.reload();
+            throw new Error('Sesión expirada. Por favor inicia sesión de nuevo.');
+          }
+          
           if (!response.ok) {
             throw new Error(data.message || 'Error en la petición');
           }
@@ -479,8 +489,19 @@
       const [locations, setLocations] = useState([]);
       const [activeChat, setActiveChat] = useState(null);
       const [hiddenAlerts, setHiddenAlerts] = useState(() => {
-        const saved = localStorage.getItem('lc_hidden_alerts');
-        return saved ? JSON.parse(saved) : [];
+        try {
+          const saved = localStorage.getItem('lc_hidden_alerts');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            // Validar que sea un array de números
+            if (Array.isArray(parsed) && parsed.every(id => typeof id === 'number')) {
+              return parsed;
+            }
+          }
+        } catch (error) {
+          console.error('Error cargando alertas ocultadas:', error);
+        }
+        return [];
       });
       const [chatMessages, setChatMessages] = useState([]);
       const [notification, setNotification] = useState(null);
@@ -666,9 +687,14 @@
           ]);
           
           // Filtrar alertas que el usuario ha ocultado
+          console.log('📊 Total alertas del servidor:', alertsRes.data.alerts.length);
+          console.log('🚫 Alertas ocultadas:', hiddenAlerts);
+          
           const visibleAlerts = alertsRes.data.alerts.filter(
             alert => !hiddenAlerts.includes(alert.id)
           );
+          
+          console.log('✅ Alertas visibles:', visibleAlerts.length);
           
           setAlerts(visibleAlerts);
           setMatches(matchesRes.data.matches);
